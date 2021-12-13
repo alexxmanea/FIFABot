@@ -284,7 +284,7 @@ def run_app(stop):
         if snipes_menu_value.get() != "None":
             press_and_release_key(RESET_KEY, None)
             post_log_message("Loading Sniping fliter " + snipes_menu_value.get() + "...")
-            shift_press_and_release_key(snipes_menu_value.get())
+            shift_press_and_release_key(snipes_menu_value.get(), load_snipes_sleep())
 
         starting_time_millis = current_time_millis()
         elapsed_time_millis = 0
@@ -408,6 +408,10 @@ def sleep_before_start_again():
     time.sleep(random.randint(900, 1100) / 1000 / float(get_running_speed()))
 
 
+def load_snipes_sleep():
+    time.sleep(random.randint(4500, 5500) / 1000)
+
+
 def press_and_release_key(key, sleep_function):
     keyboard.press(key)
     time.sleep(sleep_between_press_and_release_key)
@@ -417,12 +421,15 @@ def press_and_release_key(key, sleep_function):
         sleep_function()
 
 
-def shift_press_and_release_key(key):
+def shift_press_and_release_key(key, sleep_function):
     with keyboard.pressed(Key.shift):
         keyboard.press(key)
         time.sleep(sleep_between_press_and_release_key)
         keyboard.release(key)
     keyboard.release(Key.shift)
+
+    if sleep_function is not None:
+        sleep_function()
 
 
 def current_time_millis():
