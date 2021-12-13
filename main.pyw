@@ -4,6 +4,7 @@ import threading
 import time
 from tkinter import *
 from typing import Any
+import os
 
 from pynput.keyboard import Key, Controller
 
@@ -44,13 +45,18 @@ def get_row():
     return row
 
 
+def get_last_row():
+    global row
+    return row
+
+
 def create_actions_group():
     global radio_group_option
     radio_group_option = IntVar()
     radio_group_option.set(1)
 
     Label(app, text="Actions", font=('Verdana', 15, 'bold'), background='white').grid(row=get_row(), column=0, sticky=W,
-                                                                                      padx=30, pady=(20, 0))
+                                                                                      padx=30, pady=(10, 0))
     radio1 = Radiobutton(app, text="Buy and Send to My Club", variable=radio_group_option, value=1,
                          font=('Verdana', 14), background='white', command=set_radio_button_text_color)
     radio1.grid(row=get_row(), column=0, sticky=W, padx=30)
@@ -82,7 +88,7 @@ def create_snipes_menu():
     get_row()
     Label(app, text="Loaded Snipe Filter", font=('Verdana', 15, 'bold'), background='white').grid(row=get_row(),
                                                                                                   column=0, sticky=W,
-                                                                                                  padx=30, pady=(20, 0))
+                                                                                                  padx=30, pady=(10, 0))
 
     global snipes_menu_value
     snipes_menu_value = StringVar(app)
@@ -90,7 +96,7 @@ def create_snipes_menu():
 
     option_menu = OptionMenu(app, snipes_menu_value, *snipes_list)
     option_menu.configure(width=10, height=1, font=('Verdana', 12))
-    option_menu.grid(row=get_row(), column=0, sticky=W, padx=30, pady=10)
+    option_menu.grid(row=get_row(), column=0, sticky=W, padx=30, pady=(5, 0))
     configurable_views_list.append(option_menu)
 
     return snipes_menu_value
@@ -99,21 +105,21 @@ def create_snipes_menu():
 def create_time_textboxes():
     Label(app, text="Run time", font=('Verdana', 15, 'bold'), background='white').grid(row=get_row(), column=0,
                                                                                        sticky=W, padx=(30, 0),
-                                                                                       pady=(20, 0))
+                                                                                       pady=(10, 0))
 
     Label(app, text="Minimum minutes to run:", font=('Verdana', 12), background='white').grid(row=get_row(), column=0,
                                                                                               sticky=W, padx=(30, 0),
-                                                                                              pady=(10, 0))
+                                                                                              pady=(5, 0))
 
     global time_textbox_minimum
     time_textbox_minimum = Entry(app)
     time_textbox_minimum.configure(font=('Verdana', 12), background='white', width=30)
-    time_textbox_minimum.grid(row=get_row(), column=0, sticky=W, padx=(30, 0), pady=(0, 10))
+    time_textbox_minimum.grid(row=get_row(), column=0, sticky=W, padx=(30, 0))
     configurable_views_list.append(time_textbox_minimum)
 
     Label(app, text="Maximum minutes to run:", font=('Verdana', 12), background='white').grid(row=get_row(), column=0,
                                                                                               sticky=W, padx=(30, 0),
-                                                                                              pady=(10, 0))
+                                                                                              pady=(5, 0))
 
     global time_textbox_maximum
     time_textbox_maximum = Entry(app)
@@ -128,28 +134,66 @@ def create_pause_checkbox():
     pause_checkbox = Checkbutton(app, text="Pause between runs", variable=pause_checkbox_value, onvalue=1, offvalue=0,
                                  width=20, bg='white')
     pause_checkbox.configure(font=('Verdana', 15), background='white')
-    pause_checkbox.grid(row=get_row(), column=0, sticky=W, pady=(20, 0))
+    pause_checkbox.grid(row=get_row(), column=0, sticky=W, pady=(10, 0))
     pause_checkbox.select()
     configurable_views_list.append(pause_checkbox)
 
 
 def create_speed_textbox():
-    Label(app, text="Run speed (default = 1x)", font=('Verdana', 15, 'bold'), background='white').grid(row=get_row(),
-                                                                                                       column=0,
-                                                                                                       sticky=W,
-                                                                                                       padx=(30, 0),
-                                                                                                       pady=(20, 0))
+    Label(app, text="Run speed (default = 1x, maximum = 10x)", font=('Verdana', 15, 'bold'), background='white').grid(
+        row=get_row(),
+        column=0,
+        sticky=W,
+        padx=(30, 0),
+        pady=(10, 0))
 
     global speed_textbox
     speed_textbox = Entry(app)
     speed_textbox.configure(font=('Verdana', 12), background='white', width=30)
-    speed_textbox.grid(row=get_row(), column=0, sticky=W, padx=(30, 0), pady=10)
+    speed_textbox.grid(row=get_row(), column=0, sticky=W, padx=(30, 0), pady=(5, 0))
     configurable_views_list.append(speed_textbox)
+
+
+def create_shutdown_textbox():
+    Label(app, text="Minutes until shutdown", font=('Verdana', 15, 'bold'), background='white').grid(row=get_row(),
+                                                                                                     column=0,
+                                                                                                     sticky=W,
+                                                                                                     padx=(30, 30),
+                                                                                                     pady=(10, 0))
+
+    global shutdown_textbox
+    shutdown_textbox = Entry(app)
+    shutdown_textbox.configure(font=('Verdana', 12), background='white', width=30)
+    shutdown_textbox.grid(row=get_row(), column=0, sticky=W, padx=(30, 0), pady=(5, 0))
+    configurable_views_list.append(shutdown_textbox)
+
+
+def check_shutdown_enabled():
+    global shutdown_enabled
+    if len(shutdown_textbox.get()) > 0 and shutdown_textbox.get().isnumeric() and 1 <= int(shutdown_textbox.get()):
+        shutdown_enabled = True
+        return True
+    shutdown_enabled = False
+    return False
+
+
+def start_shutdown_command():
+    post_log_message("Windows will shut down in " + shutdown_textbox.get() + " minutes.")
+    os.system("shutdown /s /t " + str(int(shutdown_textbox.get()) * 60))
+    global shutdown_enabled
+    shutdown_enabled = True
+
+
+def stop_shutdown_command():
+    post_log_message("The scheduled shutdown has been cancelled.")
+    os.system("shutdown /a")
+    global shutdown_enabled
+    shutdown_enabled = False
 
 
 def create_log_listbox():
     listbox_frame = Frame(app, relief='sunken', bg="white")
-    listbox_frame.grid(row=get_row(), column=0, sticky=W, padx=(30, 0), pady=(0, 10))
+    listbox_frame.grid(row=get_row(), column=0, sticky=W, padx=(30, 0), pady=(10, 0))
 
     label = Label(listbox_frame, text="Running Log", font=('Verdana', 15, 'bold'), background='white', pady=5)
     label.pack(anchor=W)
@@ -166,8 +210,8 @@ def create_log_listbox():
 
     global clear_log_button
     clear_log_button = Button(app, text="Clear Log", font=('Verdana', 12), command=clear_log)
-    clear_log_button.grid(row=get_row(), column=0, sticky=W, padx=(30, 0), pady=(0, 10))
-    clear_log_button.configure(width=13, height=1, pady=5)
+    clear_log_button.grid(row=get_row(), column=0, sticky=W, padx=(30, 0), pady=(10, 0))
+    clear_log_button.configure(width=13, height=1)
 
 
 def post_log_message(message):
@@ -194,7 +238,7 @@ def create_run_button():
     global run_button
 
     run_button = Button(app, font=('Verdana', 12, 'bold'), command=push_run_button)
-    run_button.grid(row=get_row(), column=0, sticky=SE, pady=(0, 10))
+    run_button.grid(row=get_row(), column=0, sticky=SE)
     run_button_change_text()
     run_button.configure(width=13, height=2)
 
@@ -233,6 +277,9 @@ def run_app(stop):
         post_log_message("Starting in 5 seconds...")
         time.sleep(5)
         run_button.config(state=NORMAL)
+
+        if check_shutdown_enabled():
+            start_shutdown_command()
 
         if snipes_menu_value.get() != "None":
             press_and_release_key(RESET_KEY, None)
@@ -326,11 +373,13 @@ def run_app(stop):
 
     post_log_message("Stopped.")
     run_button.config(state=NORMAL)
+    if shutdown_enabled:
+        stop_shutdown_command()
     configurable_views_state(True)
 
 
 def get_running_speed():
-    if len(speed_textbox.get()) > 0 and is_float(speed_textbox.get()) and 1 <= float(speed_textbox.get()) <= 5:
+    if len(speed_textbox.get()) > 0 and is_float(speed_textbox.get()) and 1 <= float(speed_textbox.get()) <= 10:
         return float(speed_textbox.get())
     return 1
 
@@ -409,6 +458,7 @@ if __name__ == '__main__':
     create_time_textboxes()
     create_pause_checkbox()
     create_speed_textbox()
+    create_shutdown_textbox()
     create_log_listbox()
     create_run_button()
     app.mainloop()
